@@ -1,7 +1,9 @@
 import express, { Request, Response } from "express";
 import axios, { AxiosError } from "axios";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 8000;
@@ -11,7 +13,7 @@ app.use("/auth", async (req: Request, res: Response) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `http://auth-service:8001${req.path}`,
+      url: `http://auth-service:3001${req.path}`,
       data: req.body,
       headers: req.headers,
     });
@@ -30,7 +32,7 @@ app.use("/learning", async (req: Request, res: Response) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `http://learning-service:8002${req.path}`,
+      url: `http://learning-service:3002${req.path}`,
       data: req.body,
       headers: req.headers,
     });
@@ -49,7 +51,7 @@ app.use("/payments", async (req: Request, res: Response) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `http://payment-service:8003${req.path}`,
+      url: `http://payment-service:3003${req.path}`,
       data: req.body,
       headers: req.headers,
     });
@@ -62,10 +64,7 @@ app.use("/payments", async (req: Request, res: Response) => {
     }
   }
 });
-console.log("Starting API Gateway...");
-app.listen(PORT, () => {
-  console.log(`API Gateway running on port ${PORT}`);
-});
+
 
 // --- Start Server ---
 app.listen(PORT, () => {
