@@ -1,0 +1,89 @@
+name: CI/CD Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: us-central1
+      MONGODB_URI_TEST: ${{ secrets.MONGODB_URI_TEST }}
+      MONGODB_URI_PROD: ${{ secrets.MONGODB_URI_PROD }}
+      # Service URLs for tests (replace PROJECT_ID placeholder)
+      API_GATEWAY_URL_TEST: https://api-gateway-test-${{ secrets.GCP_PROJECT_ID }}.run.app
+      API_GATEWAY_URL_PROD: https://api-gateway-prod-${{ secrets.GCP_PROJECT_ID }}.run.app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          install_components: 'beta,cloud-build-local'
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Authenticate Docker to Artifact Registry
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Terraform Init (Test)
+        working-directory: ./terraform/cloud-run
+        run: terraform init
+
+      - name: Terraform Apply (Test)
+        working-directory: ./terraform/cloud-run
+        env:
+          TF_VAR_project_id: ${{ env.PROJECT_ID }}
+          TF_VAR_region: ${{ env.REGION }}
+          TF_VAR_mongodb_uri: ${{ env.MONGODB_URI_TEST }}
+          TF_VAR_github_repo: ${{ github.repository }}
+        run: |
+          terraform apply -auto-approve -var="environment=test"
+
+      - name: Install Newman (Postman CLI)
+        run: npm install -g newman
+
+      - name: Run Health Checks (Test)
+        run: |
+          newman run tests/postman/educational-app-tests.json \
+            --environment tests/postman/environment-test.json \
+            --folder "Health Checks" \
+            --bail
+
+      - name: Run Integration Tests (Test)
+        run: |
+          newman run tests/postman/educational-app-tests.json \
+            --environment tests/postman/environment-test.json \
+            --folder "Integration Tests" \
+            --bail
+
+      - name: Terraform Apply (Production)
+        if: success()
+        working-directory: ./terraform/cloud-run
+        env:
+          TF_VAR_project_id: ${{ env.PROJECT_ID }}
+          TF_VAR_region: ${{ env.REGION }}
+          TF_VAR_mongodb_uri: ${{ env.MONGODB_URI_PROD }}
+          TF_VAR_github_repo: ${{ github.repository }}
+        run: |
+          terraform apply -auto-approve -var="environment=production"
+
+      - name: Run Smoke Tests (Production)
+        if: success()
+        run: |
+          newman run tests/postman/educational-app-tests.json \
+            --environment tests/postman/environment-prod.json \
+            --folder "Health Checks" \
+            --bail

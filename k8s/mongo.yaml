@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongo
+  labels:
+    team: edu-app
 spec:
   clusterIP: None
   selector:
@@ -14,6 +16,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongo
+  labels:
+    team: edu-app
 spec:
   serviceName: mongo
   replicas: 1
@@ -24,6 +28,7 @@ spec:
     metadata:
       labels:
         app: mongo
+        team: edu-app
     spec:
       containers:
         - name: mongo

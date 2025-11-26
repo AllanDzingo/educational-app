@@ -2,8 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  labels:
+    team: edu-app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: frontend
@@ -11,6 +13,7 @@ spec:
     metadata:
       labels:
         app: frontend
+        team: edu-app
     spec:
       containers:
         - name: frontend
@@ -23,6 +26,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
+  labels:
+    team: edu-app
 spec:
   type: LoadBalancer
   selector:

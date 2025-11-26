@@ -1,0 +1,56 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-team-label
+  annotations:
+    policies.kyverno.io/title: Add Team Label
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Deployment, Service
+    policies.kyverno.io/description: >-
+      This policy automatically adds a 'team: edu-app' label to all
+      Deployments and Services for better resource organization and tracking.
+spec:
+  background: true
+  validationFailureAction: audit
+  rules:
+    - name: add-team-label-deployment
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              team: edu-app
+          spec:
+            template:
+              metadata:
+                labels:
+                  team: edu-app
+    - name: add-team-label-service
+      match:
+        any:
+        - resources:
+            kinds:
+              - Service
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              team: edu-app
+    - name: validate-team-label
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+              - Service
+      validate:
+        message: "All resources must have a 'team' label"
+        pattern:
+          metadata:
+            labels:
+              team: "?*"

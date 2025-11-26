@@ -1,0 +1,281 @@
+{
+    "info": {
+        "name": "Educational App API Tests",
+        "description": "Comprehensive API tests for Educational App microservices",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Health Checks",
+            "item": [
+                {
+                    "name": "Auth Service Health",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response has status field', function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('status');",
+                                    "    pm.expect(jsonData.status).to.eql('healthy');",
+                                    "});",
+                                    "",
+                                    "pm.test('Response time is less than 500ms', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{AUTH_SERVICE_URL}}/health",
+                            "host": [
+                                "{{AUTH_SERVICE_URL}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Learning Service Health",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response has status field', function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('status');",
+                                    "    pm.expect(jsonData.status).to.eql('healthy');",
+                                    "});",
+                                    "",
+                                    "pm.test('Response time is less than 500ms', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{LEARNING_SERVICE_URL}}/health",
+                            "host": [
+                                "{{LEARNING_SERVICE_URL}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Payment Service Health",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response has status field', function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('status');",
+                                    "    pm.expect(jsonData.status).to.eql('healthy');",
+                                    "});",
+                                    "",
+                                    "pm.test('Response time is less than 500ms', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{PAYMENT_SERVICE_URL}}/health",
+                            "host": [
+                                "{{PAYMENT_SERVICE_URL}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "API Gateway Health",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response has status field', function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('status');",
+                                    "    pm.expect(jsonData.status).to.eql('healthy');",
+                                    "});",
+                                    "",
+                                    "pm.test('All services are reachable', function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('services');",
+                                    "    pm.expect(jsonData.services.auth).to.eql('healthy');",
+                                    "    pm.expect(jsonData.services.learning).to.eql('healthy');",
+                                    "    pm.expect(jsonData.services.payment).to.eql('healthy');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{API_GATEWAY_URL}}/health",
+                            "host": [
+                                "{{API_GATEWAY_URL}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Integration Tests",
+            "item": [
+                {
+                    "name": "User Registration",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 201', function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.test('User created successfully', function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('user');",
+                                    "    pm.expect(jsonData.user).to.have.property('email');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"testpassword123\",\n  \"name\": \"Test User\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{API_GATEWAY_URL}}/auth/signup",
+                            "host": [
+                                "{{API_GATEWAY_URL}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "signup"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Courses",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is an array', function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{API_GATEWAY_URL}}/learning/courses",
+                            "host": [
+                                "{{API_GATEWAY_URL}}"
+                            ],
+                            "path": [
+                                "learning",
+                                "courses"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "API_GATEWAY_URL",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "AUTH_SERVICE_URL",
+            "value": "http://localhost:3001",
+            "type": "string"
+        },
+        {
+            "key": "LEARNING_SERVICE_URL",
+            "value": "http://localhost:3002",
+            "type": "string"
+        },
+        {
+            "key": "PAYMENT_SERVICE_URL",
+            "value": "http://localhost:3003",
+            "type": "string"
+        }
+    ]
+}

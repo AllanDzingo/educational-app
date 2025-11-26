@@ -1,0 +1,30 @@
+{
+    "name": "Test Environment",
+    "values": [
+        {
+            "key": "API_GATEWAY_URL",
+            "value": "https://api-gateway-test-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "AUTH_SERVICE_URL",
+            "value": "https://auth-service-test-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "LEARNING_SERVICE_URL",
+            "value": "https://learning-service-test-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "PAYMENT_SERVICE_URL",
+            "value": "https://payment-service-test-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "ENVIRONMENT",
+            "value": "test",
+            "enabled": true
+        }
+    ]
+}

@@ -1,0 +1,355 @@
+# Cloud Build CI/CD Pipeline with Test and Production Environments
+# This pipeline:
+# 1. Builds Docker images
+# 2. Deploys to TEST environment
+# 3. Runs health checks and integration tests
+# 4. If tests pass, deploys to PRODUCTION
+
+steps:
+  # Step 1: Build all Docker images
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-auth'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/auth-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/auth-service:latest'
+      - './auth-service'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-learning'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/learning-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/learning-service:latest'
+      - './learning-service'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-payment'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/payment-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/payment-service:latest'
+      - './payment-service'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-gateway'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/api-gateway:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/api-gateway:latest'
+      - './api-gateway'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-frontend'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/frontend:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/frontend:latest'
+      - './frontend'
+
+  # Step 2: Push all images
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-auth'
+    args: ['push', '--all-tags', '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/auth-service']
+    waitFor: ['build-auth']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-learning'
+    args: ['push', '--all-tags', '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/learning-service']
+    waitFor: ['build-learning']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-payment'
+    args: ['push', '--all-tags', '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/payment-service']
+    waitFor: ['build-payment']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-gateway'
+    args: ['push', '--all-tags', '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/api-gateway']
+    waitFor: ['build-gateway']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-frontend'
+    args: ['push', '--all-tags', '${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/frontend']
+    waitFor: ['build-frontend']
+
+  # Step 3: Deploy to TEST environment
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-test-auth'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'auth-service-test'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/auth-service:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=test,MONGODB_URI=${_MONGODB_URI_TEST}'
+      - '--tag=test'
+    waitFor: ['push-auth']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-test-learning'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'learning-service-test'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/learning-service:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=test'
+      - '--tag=test'
+    waitFor: ['push-learning']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-test-payment'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'payment-service-test'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/payment-service:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=test'
+      - '--tag=test'
+    waitFor: ['push-payment']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-test-gateway'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'api-gateway-test'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/api-gateway:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=test,AUTH_SERVICE_URL=https://auth-service-test-${PROJECT_ID}.run.app,LEARNING_SERVICE_URL=https://learning-service-test-${PROJECT_ID}.run.app,PAYMENT_SERVICE_URL=https://payment-service-test-${PROJECT_ID}.run.app'
+      - '--tag=test'
+    waitFor: ['deploy-test-auth', 'deploy-test-learning', 'deploy-test-payment']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-test-frontend'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'frontend-test'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/frontend:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=test,VITE_API_URL=https://api-gateway-test-${PROJECT_ID}.run.app'
+      - '--tag=test'
+    waitFor: ['deploy-test-gateway']
+
+  # Step 4: Wait for services to be ready
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'wait-for-services'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Waiting for services to be ready..."
+        sleep 30
+    waitFor: ['deploy-test-frontend']
+
+  # Step 5: Run health checks and integration tests with Newman
+  - name: 'postman/newman:alpine'
+    id: 'run-health-checks'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        # Update environment file with actual URLs
+        sed -i "s/PROJECT_ID/$PROJECT_ID/g" tests/postman/environment-test.json
+        
+        # Run health check tests
+        newman run tests/postman/educational-app-tests.json \
+          --environment tests/postman/environment-test.json \
+          --folder "Health Checks" \
+          --reporters cli,json \
+          --reporter-json-export test-results.json \
+          --bail
+    waitFor: ['wait-for-services']
+
+  - name: 'postman/newman:alpine'
+    id: 'run-integration-tests'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        # Run integration tests
+        newman run tests/postman/educational-app-tests.json \
+          --environment tests/postman/environment-test.json \
+          --folder "Integration Tests" \
+          --reporters cli,json \
+          --reporter-json-export integration-results.json \
+          --bail
+    waitFor: ['run-health-checks']
+
+  # Step 6: If tests pass, deploy to PRODUCTION
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-prod-auth'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'auth-service-prod'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/auth-service:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=production,MONGODB_URI=${_MONGODB_URI_PROD}'
+      - '--tag=prod'
+      - '--no-traffic'  # Deploy without traffic initially
+    waitFor: ['run-integration-tests']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-prod-learning'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'learning-service-prod'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/learning-service:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=production'
+      - '--tag=prod'
+      - '--no-traffic'
+    waitFor: ['run-integration-tests']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-prod-payment'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'payment-service-prod'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/payment-service:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=production'
+      - '--tag=prod'
+      - '--no-traffic'
+    waitFor: ['run-integration-tests']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-prod-gateway'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'api-gateway-prod'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/api-gateway:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=production,AUTH_SERVICE_URL=https://auth-service-prod-${PROJECT_ID}.run.app,LEARNING_SERVICE_URL=https://learning-service-prod-${PROJECT_ID}.run.app,PAYMENT_SERVICE_URL=https://payment-service-prod-${PROJECT_ID}.run.app'
+      - '--tag=prod'
+      - '--no-traffic'
+    waitFor: ['deploy-prod-auth', 'deploy-prod-learning', 'deploy-prod-payment']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-prod-frontend'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'frontend-prod'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/educational-app/frontend:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ENVIRONMENT=production,VITE_API_URL=https://api-gateway-prod-${PROJECT_ID}.run.app'
+      - '--tag=prod'
+      - '--no-traffic'
+    waitFor: ['deploy-prod-gateway']
+
+  # Step 7: Run smoke tests on production (before switching traffic)
+  - name: 'postman/newman:alpine'
+    id: 'run-prod-smoke-tests'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        # Update environment file with actual URLs
+        sed -i "s/PROJECT_ID/$PROJECT_ID/g" tests/postman/environment-prod.json
+        
+        # Run smoke tests on production
+        newman run tests/postman/educational-app-tests.json \
+          --environment tests/postman/environment-prod.json \
+          --folder "Health Checks" \
+          --reporters cli,json \
+          --reporter-json-export prod-smoke-results.json \
+          --bail
+    waitFor: ['deploy-prod-frontend']
+
+  # Step 8: Gradually shift traffic to new production version (canary deployment)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'shift-traffic-prod'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Shifting traffic to new production version..."
+        
+        # Shift 10% traffic to new version
+        gcloud run services update-traffic auth-service-prod --to-tags=prod=10 --region=${_REGION}
+        gcloud run services update-traffic learning-service-prod --to-tags=prod=10 --region=${_REGION}
+        gcloud run services update-traffic payment-service-prod --to-tags=prod=10 --region=${_REGION}
+        gcloud run services update-traffic api-gateway-prod --to-tags=prod=10 --region=${_REGION}
+        gcloud run services update-traffic frontend-prod --to-tags=prod=10 --region=${_REGION}
+        
+        echo "Waiting 60 seconds to monitor..."
+        sleep 60
+        
+        # If no errors, shift 100% traffic
+        gcloud run services update-traffic auth-service-prod --to-latest --region=${_REGION}
+        gcloud run services update-traffic learning-service-prod --to-latest --region=${_REGION}
+        gcloud run services update-traffic payment-service-prod --to-latest --region=${_REGION}
+        gcloud run services update-traffic api-gateway-prod --to-latest --region=${_REGION}
+        gcloud run services update-traffic frontend-prod --to-latest --region=${_REGION}
+        
+        echo "Production deployment complete!"
+    waitFor: ['run-prod-smoke-tests']
+
+# Substitutions for environment-specific values
+substitutions:
+  _REGION: us-central1
+  _MONGODB_URI_TEST: ${_MONGODB_URI_TEST}  # Set in Cloud Build trigger
+  _MONGODB_URI_PROD: ${_MONGODB_URI_PROD}  # Set in Cloud Build trigger
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '3600s'  # 1 hour timeout for complete pipeline
+
+# Store test results as artifacts
+artifacts:
+  objects:
+    location: 'gs://${PROJECT_ID}_cloudbuild/test-results/${BUILD_ID}'
+    paths:
+      - 'test-results.json'
+      - 'integration-results.json'
+      - 'prod-smoke-results.json'

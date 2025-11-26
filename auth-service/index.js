@@ -34,6 +34,40 @@ app.get('/', (req, res) => {
     res.send('auth-service is running on port ' + PORT);
 });
 
+// Health check endpoint
+app.get('/health', async (req, res) => {
+    try {
+        // Check MongoDB connection
+        const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+
+        if (dbStatus === 'connected') {
+            res.status(200).json({
+                status: 'healthy',
+                service: 'auth-service',
+                timestamp: new Date().toISOString(),
+                database: dbStatus,
+                environment: process.env.ENVIRONMENT || 'development'
+            });
+        } else {
+            res.status(503).json({
+                status: 'unhealthy',
+                service: 'auth-service',
+                timestamp: new Date().toISOString(),
+                database: dbStatus,
+                environment: process.env.ENVIRONMENT || 'development'
+            });
+        }
+    } catch (error) {
+        res.status(503).json({
+            status: 'unhealthy',
+            service: 'auth-service',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+
 app.post('/signup', async (req, res) => {
     try {
         const { username, password } = req.body;

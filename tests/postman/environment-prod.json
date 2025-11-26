@@ -1,0 +1,30 @@
+{
+    "name": "Production Environment",
+    "values": [
+        {
+            "key": "API_GATEWAY_URL",
+            "value": "https://api-gateway-prod-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "AUTH_SERVICE_URL",
+            "value": "https://auth-service-prod-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "LEARNING_SERVICE_URL",
+            "value": "https://learning-service-prod-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "PAYMENT_SERVICE_URL",
+            "value": "https://payment-service-prod-PROJECT_ID.run.app",
+            "enabled": true
+        },
+        {
+            "key": "ENVIRONMENT",
+            "value": "production",
+            "enabled": true
+        }
+    ]
+}

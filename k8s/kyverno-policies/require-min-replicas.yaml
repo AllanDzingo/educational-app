@@ -1,0 +1,47 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-min-replicas
+  annotations:
+    policies.kyverno.io/title: Require Minimum Replicas
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/description: >-
+      This policy ensures that all Deployments have a minimum of 2 replicas
+      for high availability. If a Deployment has fewer than 2 replicas,
+      it will be automatically mutated to have 2 replicas.
+spec:
+  background: true
+  validationFailureAction: audit
+  rules:
+    - name: validate-min-replicas
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      validate:
+        message: "Deployments must have at least 2 replicas for high availability"
+        pattern:
+          spec:
+            replicas: ">=2"
+    - name: mutate-min-replicas
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      mutate:
+        patchStrategicMerge:
+          spec:
+            replicas: 2
+        patchesJson6902: |-
+          - op: replace
+            path: /spec/replicas
+            value: 2
+      preconditions:
+        all:
+        - key: "{{ request.object.spec.replicas }}"
+          operator: LessThan
+          value: 2
