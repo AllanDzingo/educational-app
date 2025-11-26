@@ -30,7 +30,7 @@ variable "machine_type" {
 variable "node_count" {
   description = "Initial number of nodes in the node pool"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "min_node_count" {
@@ -42,7 +42,7 @@ variable "min_node_count" {
 variable "max_node_count" {
   description = "Maximum number of nodes for autoscaling"
   type        = number
-  default     = 5
+  default     = 3
 }
 
 variable "use_preemptible_nodes" {
@@ -55,4 +55,10 @@ variable "github_repo" {
   description = "GitHub repository in format: owner/repo"
   type        = string
   default     = "AllanDzingo/educational-app"
+}
+
+variable "disk_size_gb" {
+  description = "Disk size in GB for GKE nodes"
+  type        = number
+  default     = 30
 }

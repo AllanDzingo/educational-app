@@ -54,6 +54,10 @@ resource "google_container_cluster" "primary" {
   remove_default_node_pool = true
   initial_node_count       = 1
   
+  node_config {
+    disk_size_gb = 30
+  }
+  
   # Network configuration
   network    = "default"
   subnetwork = "default"
@@ -80,6 +84,7 @@ resource "google_container_node_pool" "primary_nodes" {
   node_config {
     preemptible  = var.use_preemptible_nodes
     machine_type = var.machine_type
+    disk_size_gb = var.disk_size_gb
     
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
     oauth_scopes = [

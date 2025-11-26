@@ -1,13 +1,4 @@
-# Copy this file to terraform.tfvars and update with your values
-# terraform.tfvars is gitignored for security
-
-project_id            = "your-gcp-project-id"
-region                = "us-central1"
-cluster_name          = "educational-app-cluster"
-environment           = "production"
-machine_type          = "e2-medium"
-node_count            = 2
-min_node_count        = 1
-max_node_count        = 5
-use_preemptible_nodes = false
-github_repo           = "AllanDzingo/educational-app"
+project_id = "education-app-479405"
+region     = "us-central1"
+cluster_name = "educational-app-cluster"
+environment = "production"
